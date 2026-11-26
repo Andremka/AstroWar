@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AstroWar: Lunar Chaos · Juego oficial</title>
+  <meta name="description" content="AstroWar: Lunar Chaos — juego 3D de artillería por turnos en la Luna. 4 contra 4, 5 armas espaciales y terreno destructible. Juega gratis en tu navegador.">
+  <meta name="theme-color" content="#160c30">
+  <meta property="og:title" content="AstroWar: Lunar Chaos">
+  <meta property="og:description" content="Artillería por turnos en la Luna. Juega gratis en tu navegador.">
+  <meta property="og:image" content="assets/img/og_portal.jpg">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/png" href="assets/img/favicon.png">
+  <link rel="preload" href="assets/fonts/Orbitron-Black.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="assets/fonts/Fredoka-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <!-- Fondo de estrellas animado -->
+  <canvas id="estrellas" aria-hidden="true"></canvas>
+
+  <!-- ===== Navegación ===== -->
+  <header class="nav" id="nav">
+    <a class="nav__marca" href="#inicio" aria-label="AstroWar: Lunar Chaos, inicio">
+      <img src="assets/img/favicon.png" alt="" width="34" height="34">
+      <span>ASTRO<b>WAR</b></span>
+    </a>
+    <button class="nav__menu" id="btnMenu" aria-label="Abrir menú" aria-expanded="false" aria-controls="navLinks">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="nav__links" id="navLinks">
+      <a href="#jugar">Jugar</a>
+      <a href="#trailer">Tráiler</a>
+      <a href="#mision">El juego</a>
+      <a href="#arsenal">Arsenal</a>
+      <a href="#controles">Controles</a>
+      <a href="#equipo">Equipo</a>
+      <a href="#gdd" class="nav__gdd">GDD</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ===== Portada ===== -->
+    <section class="hero" id="inicio">
+      <div class="hero__tierra" aria-hidden="true"></div>
+      <div class="hero__contenido">
+        <p class="hero__etiqueta"><span class="punto"></span> Juego 3D de artillería por turnos · Gratis en tu navegador</p>
+        <h1 class="hero__titulo">
+          <img src="assets/img/logo_astrowar.webp" alt="AstroWar: Lunar Chaos" width="1500" height="500" fetchpriority="high">
+        </h1>
+        <p class="hero__lema">Dos escuadrones. Cuatro astronautas por bando. Un solo cráter.<br>
+          Apunta, calcula la curva con la <strong>gravedad lunar</strong> y <strong>destruye el terreno</strong> bajo los pies de tu rival.</p>
+        <div class="hero__acciones">
+          <a class="btn btn--primario btn--grande" href="#jugar"><span class="btn__icono">▶</span> Jugar ahora</a>
+          <a class="btn btn--secundario" href="#trailer">Ver tráiler</a>
+          <a class="btn btn--fantasma" href="#gdd">Descargar GDD</a>
+        </div>
+        <ul class="hero__datos">
+          <li><b>4 vs 4</b><span>astronautas</span></li>
+          <li><b>5</b><span>armas espaciales</span></li>
+          <li><b>30 s</b><span>por turno</span></li>
+          <li><b>3</b><span>dificultades CPU</span></li>
+        </ul>
+      </div>
+      <div class="hero__luna" aria-hidden="true">
+        <i class="crater c1"></i><i class="crater c2"></i><i class="crater c3"></i><i class="crater c4"></i><i class="crater c5"></i>
+      </div>
+      <a class="hero__bajar" href="#jugar" aria-label="Ir al juego"><span></span></a>
+    </section>
+
+    <!-- ===== Juego WebGL ===== -->
+    <section class="seccion" id="jugar">
+      <div class="seccion__cabecera">
+        <p class="seccion__pre">Misión en curso</p>
+        <h2>Juega <span class="grad">ahora</span></h2>
+        <p class="seccion__sub">Sin descargas ni instalaciones. Recomendado: Chrome, Edge o Firefox en PC con teclado y ratón.</p>
+      </div>
+
+      <div class="juego">
+        <div class="juego__marco" id="juegoMarco">
+          <canvas id="unity-canvas" tabindex="-1" aria-label="AstroWar: Lunar Chaos"></canvas>
+
+          <!-- Pantalla de inicio: el clic también habilita el audio del navegador -->
+          <div class="juego__portada" id="juegoPortada">
+            <img src="assets/img/logo_astrowar_small.webp" alt="" width="750" height="250">
+            <button class="btn btn--primario btn--grande btn--pulso" id="btnIniciar">
+              <span class="btn__icono">▶</span> Iniciar misión
+            </button>
+            <p class="juego__nota">La primera carga descarga el juego (unos segundos). Las siguientes veces abre más rápido.</p>
+          </div>
+
+          <!-- Pantalla de carga -->
+          <div class="juego__carga" id="juegoCarga" hidden>
+            <div class="cohete" aria-hidden="true">🚀</div>
+            <p class="juego__carga-texto" id="cargaTexto">Preparando el despegue…</p>
+            <div class="barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="barraCarga">
+              <div class="barra__relleno" id="barraRelleno"></div>
+            </div>
+            <p class="juego__porcentaje" id="cargaPorcentaje">0 %</p>
+          </div>
+
+          <!-- Mensaje de error -->
+          <div class="juego__error" id="juegoError" hidden>
+            <p class="juego__error-titulo">No se pudo cargar el juego</p>
+            <p id="errorTexto"></p>
+          </div>
+        </div>
+
+        <div class="juego__barra">
+          <div class="juego__ayuda">
+            <span class="tecla">W A S D</span> mover
+            <span class="tecla">Espacio</span> saltar
+            <span class="tecla">Clic der.</span> apuntar / soltar dispara
+            <span class="tecla">1-5</span> armas
+            <span class="tecla">C</span> cámara
+            <span class="tecla">Esc</span> pausa
+          </div>
+          <button class="btn btn--chico" id="btnPantallaCompleta" disabled>⛶ Pantalla completa</button>
+        </div>
+        <p class="juego__aviso-movil" id="avisoMovil">📱 Este juego está pensado para computadora con teclado y ratón.</p>
+      </div>
+    </section>
+
+    <!-- ===== Tráiler ===== -->
+    <section class="seccion seccion--oscura" id="trailer">
+      <div class="seccion__cabecera">
+        <p class="seccion__pre">Transmisión entrante</p>
+        <h2>Tráiler <span class="grad">oficial</span></h2>
+      </div>
+      <div class="trailer" id="trailerContenedor">
+        <!-- portal.js coloca aquí el video (YouTube o media/trailer.mp4) -->
+        <div class="trailer__pronto" id="trailerPronto">
+          <div class="radar" aria-hidden="true"><span></span></div>
+          <p class="trailer__titulo">Tráiler en producción</p>
+          <p>Muy pronto podrás ver aquí a los astronautas en acción.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== El juego ===== -->
+    <section class="seccion" id="mision">
+      <div class="seccion__cabecera">
+        <p class="seccion__pre">Informe de misión</p>
+        <h2>Caos en el <span class="grad">Cráter Selene</span></h2>
+        <p class="seccion__sub">Una expedición lunar descubre un depósito de energía y dos escuadrones rivales, el <b class="azul">Equipo Azul</b> y el <b class="naranja">Equipo Naranja</b>, se disputan su control. Solo un escuadrón puede quedar en pie.</p>
+      </div>
+
+      <div class="rasgos">
+        <article class="rasgo">
+          <div class="rasgo__icono">🌑</div>
+          <h3>Gravedad lunar</h3>
+          <p>Con -4 m/s² los proyectiles trazan curvas largas. Una línea punteada te muestra la trayectoria y el punto de impacto.</p>
+        </article>
+        <article class="rasgo">
+          <div class="rasgo__icono">💥</div>
+          <h3>Terreno destructible</h3>
+          <p>Las mesetas se rompen en fragmentos con cada explosión. El mapa cambia durante toda la partida.</p>
+        </article>
+        <article class="rasgo">
+          <div class="rasgo__icono">⏱️</div>
+          <h3>Turnos de 30 s</h3>
+          <p>Muévete, elige arma y dispara una vez. Luego tienes 3 segundos para ponerte a cubierto.</p>
+        </article>
+        <article class="rasgo">
+          <div class="rasgo__icono">🤖</div>
+          <h3>CPU con estrategia</h3>
+          <p>La IA navega con NavMesh, calcula tiros parabólicos y elige el arma con más daño esperado.</p>
+        </article>
+      </div>
+
+      <div class="modos">
+        <article class="modo modo--azul">
+          <img src="assets/img/Icono_Personas.png" alt="" width="64" height="64">
+          <div>
+            <h3>Modo Local</h3>
+            <p>Dos jugadores en la misma computadora. Cada uno controla un equipo y se turnan el teclado y el ratón.</p>
+          </div>
+        </article>
+        <article class="modo modo--naranja">
+          <img src="assets/img/Icono_Robot.png" alt="" width="64" height="64">
+          <div>
+            <h3>Contra CPU</h3>
+            <p>Tú comandas al Equipo Azul contra la IA.</p>
+            <ul class="dificultades">
+              <li class="dif dif--1">Fácil</li>
+              <li class="dif dif--2">Intermedio</li>
+              <li class="dif dif--3">Difícil</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+
+      <div class="reglas">
+        <h3>Reglas de combate</h3>
+        <ol>
+          <li>Cada astronauta empieza con <b>100 PV</b> y aparece en una posición aleatoria.</li>
+          <li>Los equipos se alternan; dentro de cada equipo los astronautas actúan en orden.</li>
+          <li>Un disparo por turno. Si se acaba el tiempo sin disparar, el turno se pierde.</li>
+          <li>Hay <b>fuego amigo</b>: las explosiones dañan a cualquiera dentro de su radio.</li>
+          <li>Quien llega a 0 PV o cae al abismo queda eliminado.</li>
+          <li><b>Gana</b> el equipo que deja al rival sin astronautas.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ===== Arsenal ===== -->
+    <section class="seccion seccion--oscura" id="arsenal">
+      <div class="seccion__cabecera">
+        <p class="seccion__pre">Inventario</p>
+        <h2>El <span class="grad">arsenal</span></h2>
+        <p class="seccion__sub">Cinco armas espaciales. Elige con las teclas 1 a 5 o con la rueda del ratón.</p>
+      </div>
+      <div class="armas">
+        <article class="arma" style="--c:#22d3ee">
+          <span class="arma__tecla">1</span>
+          <div class="arma__icono"><img src="assets/img/Icono_Laser.png" alt="" width="64" height="64"></div>
+          <h3>Láser</h3>
+          <p>Rayo instantáneo en línea recta hasta 40 m. Impacta al primer objeto en su camino.</p>
+          <dl class="stats">
+            <div><dt>Daño</dt><dd><i style="--v:.55"></i>25</dd></div>
+            <div><dt>Radio</dt><dd><i style="--v:.08"></i>Directo</dd></div>
+            <div><dt>Munición</dt><dd class="inf">∞</dd></div>
+          </dl>
+        </article>
+        <article class="arma" style="--c:#f97316">
+          <span class="arma__tecla">2</span>
+          <div class="arma__icono"><img src="assets/img/Icono_Misil.png" alt="" width="64" height="64"></div>
+          <h3>Cohete Lunar</h3>
+          <p>Proyectil con trayectoria curva por la gravedad. Explota al impactar.</p>
+          <dl class="stats">
+            <div><dt>Daño</dt><dd><i style="--v:1"></i>45</dd></div>
+            <div><dt>Radio</dt><dd><i style="--v:.6"></i>3 m</dd></div>
+            <div><dt>Munición</dt><dd class="inf">∞</dd></div>
+          </dl>
+        </article>
+        <article class="arma" style="--c:#facc15">
+          <span class="arma__tecla">3</span>
+          <div class="arma__icono"><img src="assets/img/Icono_Granada.png" alt="" width="64" height="64"></div>
+          <h3>Granada Rebotadora</h3>
+          <p>Rebota en el terreno y explota tras una cuenta regresiva de 3 s.</p>
+          <dl class="stats">
+            <div><dt>Daño</dt><dd><i style="--v:.89"></i>40</dd></div>
+            <div><dt>Radio</dt><dd><i style="--v:.7"></i>3,5 m</dd></div>
+            <div><dt>Munición</dt><dd>3</dd></div>
+          </dl>
+        </article>
+        <article class="arma" style="--c:#ef4444">
+          <span class="arma__tecla">4</span>
+          <div class="arma__icono"><img src="assets/img/Icono_Mina.png" alt="" width="64" height="64"></div>
+          <h3>Mina Trampa</h3>
+          <p>Se arma en 2 s. Si un astronauta se acerca a 1,5 m, pita y explota.</p>
+          <dl class="stats">
+            <div><dt>Daño</dt><dd><i style="--v:.78"></i>35</dd></div>
+            <div><dt>Radio</dt><dd><i style="--v:.5"></i>2,5 m</dd></div>
+            <div><dt>Munición</dt><dd>2</dd></div>
+          </dl>
+        </article>
+        <article class="arma" style="--c:#a855f7">
+          <span class="arma__tecla">5</span>
+          <div class="arma__icono"><img src="assets/img/Icono_Singularidad.png" alt="" width="64" height="64"></div>
+          <h3>Agujero Negro</h3>
+          <p>Abre una singularidad por 4 s que atrae astronautas y rocas, y luego colapsa.</p>
+          <dl class="stats">
+            <div><dt>Daño</dt><dd><i style="--v:.67"></i>30</dd></div>
+            <div><dt>Radio</dt><dd><i style="--v:.6"></i>3 m</dd></div>
+            <div><dt>Munición</dt><dd>1</dd></div>
+          </dl>
+        </article>
+      </div>
+    </section>
+
+    <!-- ===== Controles ===== -->
+    <section class="seccion" id="controles">
+      <div class="seccion__cabecera">
+        <p class="seccion__pre">Manual de vuelo</p>
+        <h2>Cómo <span class="grad">jugar</span></h2>
+      </div>
+      <div class="controles">
+        <div class="teclas">
+          <div class="control"><div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div><p>Mover al astronauta (relativo a la cámara)</p></div>
+          <div class="control"><div class="keys"><kbd class="ancha">Espacio</kbd></div><p>Saltar. Frente a una meseta, el salto se ajusta para trepar</p></div>
+          <div class="control"><div class="keys"><kbd class="raton">🖱 Der.</kbd></div><p>Mantener para apuntar: más lejos = más potencia. Soltar para disparar</p></div>
+          <div class="control"><div class="keys"><kbd>W</kbd><kbd>S</kbd></div><p>Mientras apuntas: subir o bajar la curva del disparo</p></div>
+          <div class="control"><div class="keys"><kbd class="raton">🖱 Izq.</kbd></div><p>Cancelar el disparo mientras apuntas</p></div>
+          <div class="control"><div class="keys"><kbd>1</kbd><kbd>…</kbd><kbd>5</kbd></div><p>Elegir arma (también con la rueda del ratón)</p></div>
+          <div class="control"><div class="keys"><kbd>C</kbd></div><p>Alternar vista general y tercera persona</p></div>
+          <div class="control"><div class="keys"><kbd>Esc</kbd></div><p>Pausa (en pantalla completa, primero sale de ella)</p></div>
+        </div>
+
+        <div class="carrusel" id="carrusel" aria-roledescription="carrusel" aria-label="Tutorial del juego">
+          <div class="carrusel__pista" id="carruselPista">
+            <img src="assets/img/tutorial_1.webp" alt="Tutorial, diapositiva 1" width="1000" height="440">
+            <img src="assets/img/tutorial_2.webp" alt="Tutorial, diapositiva 2" width="1000" height="440">
+            <img src="assets/img/tutorial_3.webp" alt="Tutorial, diapositiva 3: mantener clic derecho, ajustar la curva con W y S y soltar para disparar" width="1000" height="440">
+            <img src="assets/img/tutorial_4.webp" alt="Tutorial, diapositiva 4" width="1000" height="440">
+            <img src="assets/img/tutorial_5.webp" alt="Tutorial, diapositiva 5" width="1000" height="440">
+            <img src="assets/img/tutorial_6.webp" alt="Tutorial, diapositiva 6" width="1000" height="440">
+          </div>
+          <button class="carrusel__btn carrusel__btn--ant" id="carruselAnt" aria-label="Diapositiva anterior">‹</button>
+          <button class="carrusel__btn carrusel__btn--sig" id="carruselSig" aria-label="Diapositiva siguiente">›</button>
+          <div class="carrusel__puntos" id="carruselPuntos"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Equipo ===== -->
+    <section class="seccion seccion--oscura" id="equipo">
+      <div class="seccion__cabecera">
+        <p class="seccion__pre">Tripulación</p>
+        <h2>Equipo <span class="grad">Warlings</span></h2>
+      </div>
+      <div class="tripulacion">
+        <article class="tripulante" style="--c:#3b82f6">
+          <div class="tripulante__avatar">AM</div>
+          <h3>Andres Adonay Mamani Kantuta</h3>
+          <p class="tripulante__rol">Entorno · UI/UX · WebGL · Página web</p>
+        </article>
+        <article class="tripulante" style="--c:#f97316">
+          <div class="tripulante__avatar">AA</div>
+          <h3>Ariel Vidal Acarapi Limachi</h3>
+          <p class="tripulante__rol">Personaje · Control · Armas</p>
+        </article>
+        <article class="tripulante" style="--c:#a855f7">
+          <div class="tripulante__avatar">IA</div>
+          <h3>Ivo Ismael Avendaño Ibañez</h3>
+          <p class="tripulante__rol">Reglas · IA · Audio · Tráiler</p>
+        </article>
+      </div>
+      <p class="motor">Hecho con <b>Unity 6</b> · Universal Render Pipeline · AI Navigation · Modelos propios en Blender</p>
+    </section>
+
+    <!-- ===== GDD ===== -->
+    <section class="seccion" id="gdd">
+      <div class="gdd">
+        <div class="gdd__doc" aria-hidden="true">
+          <div class="gdd__hoja"><span>GDD</span><i></i><i></i><i></i><i></i><b>PDF</b></div>
+        </div>
+        <div class="gdd__texto">
+          <p class="seccion__pre">Documentación</p>
+          <h2>Game Design <span class="grad">Document</span></h2>
+          <p>Todo sobre el diseño de AstroWar: reglas, mecánicas, armas, IA de la CPU, Triggers y Raycasts, interfaz, audio, organización del equipo y créditos de recursos.</p>
+          <div class="gdd__acciones">
+            <a class="btn btn--primario" id="btnGdd" href="docs/GDD_AstroWar_Lunar_Chaos.pdf" download>⬇ Descargar GDD (PDF)</a>
+            <a class="btn btn--fantasma" id="btnGddVer" href="docs/GDD_AstroWar_Lunar_Chaos.pdf" target="_blank" rel="noopener">Ver en el navegador</a>
+          </div>
+          <p class="gdd__estado" id="gddEstado" hidden>El GDD final se publicará muy pronto.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <img src="assets/img/logo_astrowar_small.webp" alt="AstroWar: Lunar Chaos" width="240" height="80">
+    <p>Equipo <b>Warlings</b> · Game Development · Evaluación final 2026</p>
+    <p class="pie__creditos">Tipografías Orbitron y Fredoka (SIL Open Font License). Proyecto académico sin fines comerciales.</p>
+  </footer>
+
+  <script src="js/portal.js"></script>
+</body>
+</html>

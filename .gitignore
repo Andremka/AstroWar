@@ -1,0 +1,7 @@
+# Originales PNG pesados (el portal usa las versiones .webp)
+assets/img/Logo_AstroWar.png
+assets/img/Tutorial_*.png
+# Archivos del sistema
+Thumbs.db
+desktop.ini
+.DS_Store
